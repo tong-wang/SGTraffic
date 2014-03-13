@@ -16,8 +16,7 @@ shinyUI(bootstrapPage(
                 
         ),
         gridsterItem(col = 1, row = 2, size.x = 1, size.y = 1,
-            gaugeOutput("live_gauge", width=250, height=200, units="%", min=0, max=100, title="Percentage")
-            #plotOutput("piePlot")
+            plotOutput("piePlot")
         ),
         gridsterItem(col = 2, row = 1, size.x = 3, size.y = 2,
             htmlWidgetOutput('mapPanel', 

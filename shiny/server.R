@@ -10,6 +10,9 @@ date.min <- min(traffic.df$Date)
 date.max <- max(traffic.df$Date)
 
 
+
+
+
 library(shiny)
 library(ShinyDash)
 
@@ -45,24 +48,19 @@ shinyServer(function(input, output, session) {
         ddply(data.selected(), .(Date), function(x) {data.frame(count=nrow(x))})
     })
     
+    countByRoad <- reactive({
+        byRoad <- ddply(data.selected(), .(RoadName), function(x) {data.frame(count=nrow(x))})
     
-    # Set the value for the gauge
-    # When this reactive expression is assigned to an output object, it is
-    # automatically wrapped into an observer (i.e., a reactive endpoint)
-    output$live_gauge <- renderGauge({
-        round(100*nrow(data.selected())/nrow(traffic.df), 1)
+        byRoad.short <- byRoad[order(byRoad$count, decreasing=TRUE),][1:6,]
+        countOthers <- sum(byRoad$count) - sum(byRoad.short$count)
+        rbind(byRoad.short, data.frame(RoadName="Others", count=countOthers))
     })
+    
   
-    # Output the status text ("OK" vs "Past limit")
-    # When this reactive expression is assigned to an output object, it is
-    # automatically wrapped into an observer (i.e., a reactive endpoint)
     output$mapData <- renderPrint({
         data.selected()[,c("lon", "lat")]
     })
   
-    # observes if value of mydata sent from the client changes.  if yes
-    # generate a new random color string and send it back to the client
-    # handler function called 'myCallbackHandler'
     
     #lon.str <- "lon" ## for leaflet
     lon.str <- "lng"  ## for google
@@ -87,16 +85,22 @@ shinyServer(function(input, output, session) {
     })
   
 
-#    output$piePlot <- renderPlot(height=250, {
-#        pie <- ggplot(data=countByDate(), aes(x=Date, y=count)) + geom_bar(stat="identity", fill="red") + scale_x_date() + xlab("Date") + ylab("Number of incidents")
-#        print(pie)
-#    })  
+    output$piePlot <- renderPlot(height=240, {
+        pie <- ggplot(data=countByRoad(), aes(x=factor(1), y=count, fill = RoadName)) + 
+                geom_bar(width = 1, stat="identity") + coord_polar(theta="y") + 
+                xlab('') + ylab('') + 
+                geom_text(aes(x=1.3, y = count/2 + c(0, cumsum(count)[-length(count)]), label = RoadName), size=3) + 
+                guides(fill=FALSE) + theme(axis.ticks.y=element_blank(), axis.text.y=element_blank())
+        print(pie)
+    })  
 
-    output$countPlot <- renderPlot(height=250, {
-        gg <- ggplot(data=countByDate(), aes(x=Date, y=count)) + geom_bar(stat="identity", fill="red") + scale_x_date() + xlab("Date") + ylab("Number of incidents")
-        print(gg)
+    output$countPlot <- renderPlot(height=240, {
+        bar <- ggplot(data=countByDate(), aes(x=Date, y=count)) + geom_bar(stat="identity", fill="red") + scale_x_date() + xlab("Date") + ylab("Number of incidents")
+        print(bar)
     })  
   
   
 })
+
+
 
