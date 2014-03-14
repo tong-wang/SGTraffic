@@ -6,10 +6,11 @@ load(file="traffic.RData")
 # count accidents by date
 traffic.df$Date <- as.Date(traffic.df$Datetime)
 
+traffic.df$XCoor <- NULL
+traffic.df$YCoor <- NULL
+
 date.min <- min(traffic.df$Date)
 date.max <- max(traffic.df$Date)
-
-
 
 
 
@@ -41,7 +42,7 @@ shinyServer(function(input, output, session) {
   
     
     data.selected <- reactive({
-        traffic.df[(traffic.df$Date >= input$inDates[1]) & (traffic.df$Date <= input$inDates[2]) & (traffic.df$Type %in% input$inTypes), ]
+        traffic.df[(traffic.df$Date >= input$inDates[1]) & (traffic.df$Date <= input$inDates[2]) & (traffic.df$Type == input$inTypes), ]
     })
     
     countByDate <- reactive({
@@ -57,31 +58,22 @@ shinyServer(function(input, output, session) {
     })
     
   
-    output$mapData <- renderPrint({
-        data.selected()[,c("lon", "lat")]
-    })
-  
     
     #lon.str <- "lon" ## for leaflet
     lon.str <- "lng"  ## for google
     
     observe({
-        input$inTypes
+        #input$inTypes
      
         out <- data.selected()[,c("lon", "lat")]
         out$lon <- as.numeric(out$lon)
         out$lat <- as.numeric(out$lat)
      
-        json <- paste0("{\"max\": 5, \"data\": [{\"", lon.str, "\": ", out[1,]$lon, ", \"lat\": ", out[1,]$lat, ", \"count\": 1}")
+        str <- apply(out, 1, function(x) paste0("{\"", lon.str, "\": ", x[1], ", \"lat\": ", x[2], ", \"count\": 1}"))
+        str <- paste0(str, collapse=",")
+        json <- paste0("{\"max\": 2, \"data\": [", str, "]}")
          
-        for (i in 2:nrow(out)) {
-            str <- paste0("{\"", lon.str, "\": ", out[i,]$lon, ", \"lat\": ", out[i,]$lat, ", \"count\": 1}")
-            json = paste(json, str, sep=", ")
-        }
-        
-        json = paste(json, "]}")
-         
-         session$sendCustomMessage(type = "myCallbackHandler", json)
+        session$sendCustomMessage(type = "myCallbackHandler", json)
     })
   
 

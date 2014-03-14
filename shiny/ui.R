@@ -21,12 +21,11 @@ shinyUI(bootstrapPage(
         gridsterItem(col = 2, row = 1, size.x = 3, size.y = 2,
             htmlWidgetOutput('mapPanel', 
                                 tags$iframe(name="mapFrame", id="mapFrame", height=480, width=720, src="heatmap_google.htm"),
-                                #verbatimTextOutput("mapData"),
                                 # handler to receive data from server
                                 tags$script("Shiny.addCustomMessageHandler('myCallbackHandler',
-                                    function(mapData) {
+                                    function(json) {
                                         var hInput = $('#mapFrame').contents().find('body').find('#hiddenInputBox')[0];
-                                        hInput.value = mapData;
+                                        hInput.value = json;
                                         hInput.onchange();
                                     });"
                                 )
